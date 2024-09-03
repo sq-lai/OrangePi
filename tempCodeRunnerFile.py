@@ -1,0 +1,1 @@
+mqtt.CallbackAPIVersion.VERSION1

@@ -1,0 +1,19 @@
+Change Physical Footprint: Designator=BAT1 Old Footprint=CR1220_A New Footprint=CR1220_A
+Change Physical Footprint: Designator=C14 Old Footprint=CD B(3528) New Footprint=CD B(3528)
+Change Physical Footprint: Designator=C15 Old Footprint=CAP 3.5*8*11.5 - BK New Footprint=CAP 3.5*8*11.5 - BK
+Change Physical Footprint: Designator=D4 Old Footprint=SMA/DO-214AC New Footprint=SMA/DO-214AC
+Change Physical Footprint: Designator=J1 Old Footprint=15EDG3.81-WI-2P New Footprint=15EDG3.81-WI-2P
+Change Physical Footprint: Designator=J3 Old Footprint=15EDG3.81-WI-3P New Footprint=15EDG3.81-WI-3P
+Change Physical Footprint: Designator=J5 Old Footprint=15EDG3.81-WI-3P New Footprint=15EDG3.81-WI-3P
+Change Physical Footprint: Designator=LED5 Old Footprint=0603-LED-G New Footprint=0603-LED-G
+Change Physical Footprint: Designator=PC4 Old Footprint=0603-LED-G New Footprint=0603-LED-G
+Change Physical Footprint: Designator=PC5 Old Footprint=0603-LED-G New Footprint=0603-LED-G
+Change Physical Footprint: Designator=U2 Old Footprint=SOT223 New Footprint=SOT223
+Change Physical Footprint: Designator=U5 Old Footprint=SOIC-14 New Footprint=SOIC-14
+Change Physical Footprint: Designator=U7 Old Footprint=SOIC-14 New Footprint=SOIC-14
+Change Physical Footprint: Designator=U8 Old Footprint=SOT223 New Footprint=SOT223
+Change Physical Footprint: Designator=U9 Old Footprint=SOIC-16-9.1mm New Footprint=SOIC-16-9.1mm
+Change Physical Footprint: Designator=U10 Old Footprint=SOIC-16-9.1mm New Footprint=SOIC-16-9.1mm
+Change Physical Footprint: Designator=U13 Old Footprint=SOIC-16 New Footprint=SOIC-16
+Change Physical Footprint: Designator=X1 Old Footprint=OSC HC-49SMD New Footprint=OSC HC-49SMD
+Change Physical Footprint: Designator=X2 Old Footprint=OSC HC-49SMD New Footprint=OSC HC-49SMD
