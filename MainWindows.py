@@ -123,19 +123,23 @@ class MainWindow(QMainWindow, Ui_mainWindow):
         self.lcdNumber22.setDigitCount(9)
         self.lcdNumber222.setDigitCount(9)
         self.lcdNumber2.setDigitCount(9)
-        self.lcdNumber33.setDigitCount(9)
-        self.lcdNumber333.setDigitCount(9)
-        self.lcdNumber3.setDigitCount(9)
-        self.lcdNumber44.setDigitCount(9)
-        self.lcdNumber444.setDigitCount(9)
-        self.lcdNumber4.setDigitCount(9)
+        # self.lcdNumber33.setDigitCount(9)
+        # self.lcdNumber333.setDigitCount(9)
+        # self.lcdNumber3.setDigitCount(9)
+        # self.lcdNumber44.setDigitCount(9)
+        # self.lcdNumber444.setDigitCount(9)
+        # self.lcdNumber4.setDigitCount(9)
         
-        # 初始化电压、电流、用电量
+        # 初始化电压、电流、用电量、湿度、温度、烟雾浓度
         self.voltage = 0
         self.current = 0
         self.power_consumption = 0
         self.alarm = 0
         self.power_switch = 0
+        self.Humidity = 0
+        self.Temperature = 0
+        self.Smoke_Concentration = 0
+        self.Smoke_alarm = 0 #云端还没有这个参数传入
         
         # 打开串口
         try:
@@ -219,6 +223,15 @@ class MainWindow(QMainWindow, Ui_mainWindow):
                 elif sign_flag == '05':  # 用电量
                     self.power_consumption = value
                     self.update_lcd(self.lcdNumber1, value)
+                elif sign_flag == '06':  # 湿度
+                    self.Humidity = value
+                    self.update_lcd(self.lcdNumber22, value)
+                elif sign_flag == '07':  # 温度
+                    self.Temperature = value
+                    self.update_lcd(self.lcdNumber2, value)
+                elif sign_flag == '08':  # 烟雾浓度
+                    self.Smoke_Concentration = value
+                    self.update_lcd(self.lcdNumber222, value)    
                 self.update_checkbox()
                 self.send_data_to_cloud()
             except ValueError as e:
@@ -245,6 +258,14 @@ class MainWindow(QMainWindow, Ui_mainWindow):
         else:
             self.alarm = 0
             self.checkBox11.setChecked(False)
+        
+        if self.Smoke_Concentration > 50:
+            self.Smoke_alarm = 1
+            self.checkBox2.setChecked(True)
+        else:
+            self.Smoke_alarm= 0
+            self.checkBox2.setChecked(False)   
+        #气体的还没开发，需要定下规则         
 
     # 发送数据到云端
     def send_data_to_cloud(self):
@@ -254,6 +275,9 @@ class MainWindow(QMainWindow, Ui_mainWindow):
                 "Alarm_all": 0,
                 "Alarm": self.alarm,
                 "Current": self.current,
+                "Humidity":self.Humidity,
+                "Temperature":self.Temperature,
+                "Smoke_Concentration":self.Smoke_Concentration,
                 "Voltage": self.voltage,
                 "PowerSwitch_1": self.power_switch
             },
