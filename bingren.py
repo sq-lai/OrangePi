@@ -111,7 +111,7 @@ def publish_loop():
         # global onoff
         # onoff = 1-onoff
         # switchPost = json_switch_set('1', onoff)
-        switchPost = '{"params":{"Watt":180,"Alarm_all":0,"Alarm":0,"Current":45,"Voltage":80,"PowerSwitch_1":1},"version":"1.0.0"}'
+        switchPost = '{"params":{"Watt":222,"Alarm_all":0,"Alarm":1,"Current":222,"Voltage":222,"PowerSwitch_1":1,"Inform":1},"version":"1.0.0"}'
 
         client.publish(topic_post, payload=switchPost, qos=0)
 

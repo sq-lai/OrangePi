@@ -143,7 +143,7 @@ class MainWindow(QMainWindow, Ui_mainWindow):
         
         # 打开串口
         try:
-            self.serial_port = serial.Serial('/dev/ttyS1', baudrate=115200, timeout=1)
+            self.serial_port = serial.Serial('/dev/ttyS1', baudrate=19200, timeout=1)
             print("Serial port opened successfully")  # 打印串口打开成功信息
         except Exception as e:
             print(f"Failed to open serial port: {e}")  # 打印串口打开失败信息
