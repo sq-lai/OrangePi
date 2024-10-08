@@ -56,7 +56,8 @@ onoff = 0
 
 # 建立mqtt连接对象
 #mqtt.CallbackAPIVersion.VERSION1出现问题删除下，运行文件；再添加这个代码运行下就可以了
-client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, mqttClientId, protocol=mqtt.MQTTv311, clean_session=True)
+#paho库是2.0及以上版本，加上面的，1.几版本不用加，其他的代码不用修改
+client = mqtt.Client(mqttClientId, protocol=mqtt.MQTTv311, clean_session=True)
 
 def on_log(client, userdata, level, buf):
     if level == MQTT_LOG_INFO:
