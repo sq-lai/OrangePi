@@ -3,8 +3,8 @@ import os
 import serial
 import threading
 import requests
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel,QSizePolicy, QVBoxLayout, QWidget
+from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt, QMetaObject, Q_ARG
 from UI.power_moniter import Ui_mainWindow
 import OPi.GPIO as GPIO
@@ -15,9 +15,13 @@ from paho.mqtt.client import MQTT_LOG_INFO, MQTT_LOG_NOTICE, MQTT_LOG_WARNING, M
 from paho.mqtt import client as mqtt
 import json
 import random
+import matplotlib.pyplot as plt
+import datetime
 
-# 设置GPIO的引脚模式
-GPIO.setmode(GPIO.BOARD)
+
+######################################################################################
+# 阿里云链接配置#
+######################################################################################
 
 # 设备证书（ProductKey、DeviceName和DeviceSecret），三元组
 productKey = 'k1h6wbBlprP'
@@ -97,11 +101,20 @@ def mqtt_connect_aliyun_iot_platform():
         print('阿里云物联网平台MQTT服务器连接错误，请检查设备证书三元组、及接入点的域名！')
     client.loop_forever()
 
+
+
+######################################################################################
+# 主界面类函数，核心程序#
+######################################################################################
 # 主窗口类
 class MainWindow(QMainWindow, Ui_mainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.setupUi(self)  # 初始化UI
+
+        
+        # 设置GPIO的引脚模式
+        GPIO.setmode(GPIO.BOARD)
 
         # 设置485的输出模式
         GPIO.setup(7, GPIO.OUT)
@@ -123,13 +136,7 @@ class MainWindow(QMainWindow, Ui_mainWindow):
         self.lcdNumber22.setDigitCount(9)
         self.lcdNumber222.setDigitCount(9)
         self.lcdNumber2.setDigitCount(9)
-        # self.lcdNumber33.setDigitCount(9)
-        # self.lcdNumber333.setDigitCount(9)
-        # self.lcdNumber3.setDigitCount(9)
-        # self.lcdNumber44.setDigitCount(9)
-        # self.lcdNumber444.setDigitCount(9)
-        # self.lcdNumber4.setDigitCount(9)
-        
+
         # 初始化电压、电流、用电量、湿度、温度、烟雾浓度
         self.voltage = 0
         self.current = 0
@@ -140,6 +147,17 @@ class MainWindow(QMainWindow, Ui_mainWindow):
         self.Temperature = 0
         self.Smoke_Concentration = 0
         self.Smoke_alarm = 0 #云端还没有这个参数传入
+
+
+        # 新增的画图变量
+        self.power_data = {}  # 用于存储每天的用电量，字典形式：天是键，这一天24个小时的用电量存入数组中作为值。键值对形式
+        self.daily_power = []  # 存储当天24小时的用电量
+        self.days_data_file = 'power_data.txt'
+        self.hourly_record_interval = 3600  # 每小时记录一次数据，单位为秒
+        self.next_record_time = time.time()  # 下次记录时间
+        # 在初始化函数中设置QLabel的大小策略,加了显示的图片才会随窗口变大而变大
+        self.label_4.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.label_8.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
         # 打开串口
         try:
@@ -223,6 +241,8 @@ class MainWindow(QMainWindow, Ui_mainWindow):
                 elif sign_flag == '05':  # 用电量
                     self.power_consumption = value
                     self.update_lcd(self.lcdNumber1, value)
+                    self.log_power_data(value)  # 记录用电量
+                    self.update_graphs()  # 更新图形
                 elif sign_flag == '06':  # 湿度
                     self.Humidity = value
                     self.update_lcd(self.lcdNumber22, value)
@@ -236,6 +256,96 @@ class MainWindow(QMainWindow, Ui_mainWindow):
                 self.send_data_to_cloud()
             except ValueError as e:
                 print(f"Error parsing value: {e}")  # 打印解析值错误信息
+
+
+    #txt文件存入信息
+    def log_power_data(self, value):
+        current_time = time.time()
+
+        # 每小时记录一次
+        if current_time >= self.next_record_time:
+            now = datetime.datetime.now()
+            hour = now.strftime('%H')  # 获取当前小时
+            today = now.strftime('%Y-%m-%d')  # 获取当天日期
+
+            if today not in self.power_data:
+                self.power_data[today] = [0] * 24  # 初始化为24个0的列表
+
+            # 记录当前小时的值
+            self.power_data[today][int(hour)] = value  # 将当前小时的用电量记录到相应的位置
+
+            # 保存数据到文件
+            with open(self.days_data_file, 'w') as f:
+                for date, values in self.power_data.items():
+                    if len(values) > 24:  # 每天存储24次数据
+                        values = values[-24:]
+                    f.write(f"{date}: {','.join(map(str, values))}\n")  # 将每个小时的用电量写入文件
+
+            # 删除过期数据
+            if len(self.power_data) > 30:
+                oldest_date = min(self.power_data.keys())
+                del self.power_data[oldest_date]
+
+            # 更新下一个记录时间
+            self.next_record_time = current_time + self.hourly_record_interval
+
+    #实时更新图片曲线
+    def update_graphs(self):
+        # 计算每天的平均功率
+        average_power = {date: sum(values) / len(values) for date, values in self.power_data.items() if values}
+        dates = list(average_power.keys())
+        averages = list(average_power.values())
+
+        # 创建新的 Figure 对象
+        fig1, ax1 = plt.subplots(figsize=(10, 5))
+        ax1.plot(dates, averages, marker='o')
+        ax1.set_title('Average Power Consumption Over 30 Days')
+        ax1.set_xlabel('Date')
+        ax1.set_ylabel('Average Power (W)')
+        ax1.set_xticks(dates)
+        ax1.set_xticklabels(dates, rotation=45)
+        plt.tight_layout()
+
+        # 在 label_4 上显示图形
+        self.display_plot(fig1  , self.label_4)
+
+
+        # 绘制当天24小时的功率变化图
+        current_day = datetime.datetime.now().strftime('%Y-%m-%d')
+        if current_day in self.power_data:
+            # 获取当天的功率数据
+            hourly_power = self.power_data[current_day]
+
+            fig2, ax2 = plt.subplots(figsize=(10, 5))
+            ax2.plot(range(24), hourly_power, marker='o')  # x轴为小时，y轴为用电量
+            ax2.set_title('Power Consumption for Today (24h)')
+            ax2.set_xlabel('Hour')
+            ax2.set_ylabel('Power (W)')
+            ax2.set_xticks(range(24))  # 设置x轴为0-23
+            ax2.set_xticklabels(range(24))  # x轴标签为0-23小时
+            plt.tight_layout()
+
+
+            # 在 label_8 上显示图形
+            self.display_plot(fig2, self.label_8)
+
+
+    def display_plot(self, figure, label):
+        # 将matplotlib图形嵌入到指定的QLabel中
+        figure.canvas.draw()  # 绘制图形
+
+        # 获取图形的QPixmap
+        width, height = figure.canvas.get_width_height()
+        image = figure.canvas.buffer_rgba()  # 获取图形的RGBA数据
+        qimage = QImage(image, width, height, QImage.Format_RGBA8888)  # 使用RGBA格式创建QImage
+
+        # 设置标签的pixmap
+        pixmap = QPixmap.fromImage(qimage)  # 转换为QPixmap
+        pixmap = QPixmap.fromImage(qimage)  # 转换为QPixmap
+        label.setPixmap(pixmap.scaled(label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
+        plt.close(figure)  # 关闭当前图形，以便下次使用 # 清除当前图形，以便下次使用
+
 
     # 更新LCD显示
     def update_lcd(self, lcd, value):
@@ -265,7 +375,9 @@ class MainWindow(QMainWindow, Ui_mainWindow):
         else:
             self.Smoke_alarm= 0
             self.checkBox2.setChecked(False)   
-        #气体的还没开发，需要定下规则         
+        #气体的还没开发，需要定下规则  
+
+
 
     # 发送数据到云端
     def send_data_to_cloud(self):
@@ -287,16 +399,19 @@ class MainWindow(QMainWindow, Ui_mainWindow):
         client.publish(topic_post, payload=payload, qos=0)  # 发布消息到MQTT主题
         print(f"Sent data to cloud: {payload}")  # 打印发送的数据
 
-# 主程序入口
+
+##########################################################################################################
+# 主程序入口#
+##########################################################################################################
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
 
     # 建立线程t1：mqtt连接阿里云物联网平台
+    #主线程跑界面和数据处理，子线程跑云端链接
     t1 = threading.Thread(target=mqtt_connect_aliyun_iot_platform, )
     t1.start()
-
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
