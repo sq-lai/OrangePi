@@ -105,30 +105,30 @@ def mqtt_connect_aliyun_iot_platform():
 # 数据库配置与链接 #
 #######################################################################################
 # MySQL数据库连接
-# try:
-#     db_conn = mysql.connector.connect(
-#         host="localhost",  # 替换为您的MySQL服务器地址
-#         user="root",        # 替换为您的用户名
-#         password="password",  # 替换为您的密码
-#         database="sensor_data_db"  # 替换为您的数据库名称
-#     )
-#     cursor = db_conn.cursor()
-#     cursor.execute('''
-#     CREATE TABLE IF NOT EXISTS sensor_data (
-#         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-#         voltage REAL,
-#         current REAL,
-#         power_consumption REAL,
-#         humidity REAL,
-#         temperature REAL,
-#         smoke_concentration REAL
-#     )
-#     ''')
-#     db_conn.commit()
-#     print("Connected to MySQL database and ensured table exists.")
-# except mysql.connector.Error as err:
-#     print(f"Error: {err}")
-#     sys.exit(1)
+try:
+    db_conn = mysql.connector.connect(
+        host="192.168.137.64",  # 替换为MySQL服务器地址，ip是香橙派主机ip，docker容器装载了一个mysql。
+        user="root",        # 替换为您的用户名
+        password="123456789",  # 替换为您的密码
+        database="sensor_data"  # 替换为您的数据库名称
+    )
+    cursor = db_conn.cursor()
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS sensor_data (
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        voltage REAL,
+        current REAL,
+        power_consumption REAL,
+        humidity REAL,
+        temperature REAL,
+        smoke_concentration REAL
+    )
+    ''')
+    db_conn.commit()
+    print("Connected to MySQL database and ensured table exists.")
+except mysql.connector.Error as err:
+    print(f"Error: {err}")
+    sys.exit(1)
 
 
 ######################################################################################
@@ -275,15 +275,27 @@ class MainWindow(QMainWindow, Ui_mainWindow):
                 value = int(value_data, 16)  # 将16进制转换为10进制
                 print(f"Value (decimal): {value}")  # 打印转换后的10进制值
                 if sign_flag == '03':  # 电压
+                    #模拟功率变化，加了随机数，之后要删除！！！
+                    random_increase = random.randint(1, 3)
+                    value = value + random_increase
+                    #中间这两行
                     self.voltage = value
                     print(f"Updating voltage to: {value}")
                     self.update_lcd(self.lcdNumber11, value)
                 elif sign_flag == '04':  # 电流
+                    #模拟功率变化，加了随机数，之后要删除！！！
+                    random_increase = random.randint(1, 3)
+                    value = value + random_increase
+                    #中间这两行
                     self.current = value
                     print(f"Updating current to: {value}")
                     self.update_lcd(self.lcdNumber111, value)
                 elif sign_flag == '05':  # 用电量
-                    self.power_consumption = value
+                    #模拟功率变化，加了随机数，之后要删除！！！
+                    random_increase = random.randint(1, 3)
+                    value = value + random_increase
+                    #中间这两行
+                    self.power_consumption = value 
                     print(f"Updating power consumption to: {value}")
                     self.update_lcd(self.lcdNumber1, value)
                     self.update_power_graphs(value)  # 更新功率曲线图，实时记录变化
@@ -301,22 +313,22 @@ class MainWindow(QMainWindow, Ui_mainWindow):
                     self.update_lcd(self.lcdNumber222, value)    
                 self.update_checkbox()
                 self.send_data_to_cloud()
-                # self.save_to_database()  # 将数据保存到数据库
+                self.save_to_database()  # 将数据保存到数据库
             except ValueError as e:
                 print(f"Error parsing value: {e}")  # 打印解析值错误信息
 
-    # # 将数据保存到数据库
-    # def save_to_database(self):
-    #     try:
-    #         print("Saving data to database...")
-    #         cursor.execute('''
-    #             INSERT INTO sensor_data (voltage, current, power_consumption, humidity, temperature, smoke_concentration)
-    #             VALUES (%s, %s, %s, %s, %s, %s)
-    #         ''', (self.voltage, self.current, self.power_consumption, self.Humidity, self.Temperature, self.Smoke_Concentration))
-    #         db_conn.commit()
-    #         print("Data saved to database successfully.")
-    #     except mysql.connector.Error as err:
-    #         print(f"Failed to save data to database: {err}")
+    # 将数据保存到数据库
+    def save_to_database(self):
+        try:
+            print("Saving data to database...")
+            cursor.execute('''
+                INSERT INTO sensor_data (voltage, current, power_consumption, humidity, temperature, smoke_concentration)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            ''', (self.voltage, self.current, self.power_consumption, self.Humidity, self.Temperature, self.Smoke_Concentration))
+            db_conn.commit()
+            print("Data saved to database successfully.")
+        except mysql.connector.Error as err:
+            print(f"Failed to save data to database: {err}")
 
     # 更新LCD显示
     def update_lcd(self, lcd, value):
