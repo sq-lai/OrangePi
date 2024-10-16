@@ -107,9 +107,9 @@ def mqtt_connect_aliyun_iot_platform():
 # MySQL数据库连接
 try:
     db_conn = mysql.connector.connect(
-        host="127.0.0.1",  # 替换为您的MySQL服务器地址
+        host="192.168.137.64",  # 替换为MySQL服务器地址，ip是香橙派主机ip，docker容器装载了一个mysql。
         user="root",        # 替换为您的用户名
-        password="1234567890",  # 替换为您的密码
+        password="123456789",  # 替换为您的密码
         database="sensor_data"  # 替换为您的数据库名称
     )
     cursor = db_conn.cursor()
@@ -283,7 +283,7 @@ class MainWindow(QMainWindow, Ui_mainWindow):
                     print(f"Updating current to: {value}")
                     self.update_lcd(self.lcdNumber111, value)
                 elif sign_flag == '05':  # 用电量
-                    self.power_consumption = value
+                    self.power_consumption = value 
                     print(f"Updating power consumption to: {value}")
                     self.update_lcd(self.lcdNumber1, value)
                     self.update_power_graphs(value)  # 更新功率曲线图，实时记录变化
