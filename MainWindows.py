@@ -107,10 +107,10 @@ def mqtt_connect_aliyun_iot_platform():
 # MySQL数据库连接
 try:
     db_conn = mysql.connector.connect(
-        host="localhost",  # 替换为您的MySQL服务器地址
+        host="127.0.0.1",  # 替换为您的MySQL服务器地址
         user="root",        # 替换为您的用户名
-        password="password",  # 替换为您的密码
-        database="sensor_data_db"  # 替换为您的数据库名称
+        password="1234567890",  # 替换为您的密码
+        database="sensor_data"  # 替换为您的数据库名称
     )
     cursor = db_conn.cursor()
     cursor.execute('''
